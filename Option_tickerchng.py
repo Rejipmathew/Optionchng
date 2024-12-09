@@ -24,20 +24,30 @@ def main():
     # Expiry Date Input as dropdown
     expiry_date = st.selectbox("Select options expiry date:", options_dates)
 
-    # Get options data for each ticker
+    # Get options data and current price for each ticker
     options_data = {}
     for ticker in tickers:
         try:
             stock = yf.Ticker(ticker)
             options = stock.option_chain(expiry_date)
             options_data[ticker] = options
+
+            # Get current stock price
+            current_price = stock.info.get("currentPrice")
+            # st.subheader(f"{ticker} - Current Price: ${current_price} - Expiry: {expiry_date}")  # Use this if you want a separate subheader
+
         except Exception as e:
             st.error(f"Error fetching data for {ticker}: {e}")
 
     # Create different pages for each ticker
     if options_data:
         for ticker, option_chain in options_data.items():
-            with st.expander(f"{ticker} ({expiry_date})"):  # Use expander for each ticker
+            # Get current stock price (again, as it's inside the loop)
+            stock = yf.Ticker(ticker)  
+            current_price = stock.info.get("currentPrice")
+
+            # Use f-string to format the expander label
+            with st.expander(f"{ticker} - Current Price: ${current_price:.2f} - Expiry: {expiry_date}"):
                 for option_type in ["calls", "puts"]:
                     df = getattr(option_chain, option_type)
                     df["percentChange"] = df["percentChange"].abs()
